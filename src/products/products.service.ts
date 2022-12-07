@@ -7,6 +7,9 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { validate as isUUID } from 'uuid';
+
+import { PaginationDto } from '../common/dtos/pagination.dto';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { Product } from './entities/product.entity';
@@ -32,22 +35,50 @@ export class ProductsService {
   }
 
   // TODO: Paginar datos
-  findAll() {
-    return this.productRepository.find({});
+  findAll(paginationDto: PaginationDto) {
+    const { limit = 10, offset = 0 } = paginationDto;
+    return this.productRepository.find({
+      take: limit,
+      skip: offset,
+    });
   }
 
-  async findOne(id: string) {
-    const product = await this.productRepository.findOneBy({ id });
+  async findOne(term: string) {
+    let product: Product;
+
+    if (isUUID(term)) {
+      product = await this.productRepository.findOneBy({ id: term });
+    } else {
+      const query = this.productRepository.createQueryBuilder();
+      product = await query
+        .where('LOWER(title) = :title or slug = :slug', {
+          title: term.toLowerCase(),
+          slug: term.toLowerCase(),
+        })
+        .getOne();
+    }
 
     if (!product) {
-      throw new NotFoundException(`Product with id "${id}" not found`);
+      throw new NotFoundException(`Product with term "${term}" not found`);
     }
 
     return product;
   }
 
-  update(id: number, updateProductDto: UpdateProductDto) {
-    return `This action updates a #${id} product`;
+  async update(id: string, updateProductDto: UpdateProductDto) {
+    const product = await this.productRepository.preload({
+      id,
+      ...updateProductDto,
+    });
+
+    if (!product) {
+      return new NotFoundException(`Product with id "${id}" not found`);
+    }
+    try {
+      return this.productRepository.save(product);
+    } catch (e) {
+      this._handleDbExceptions(e);
+    }
   }
 
   async remove(id: string) {
