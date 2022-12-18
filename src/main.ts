@@ -1,4 +1,4 @@
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 
@@ -14,8 +14,8 @@ async function bootstrap() {
     }),
   );
 
-  const port = 3000;
+  const port = process.env.PORT || 3000;
   await app.listen(port);
-  console.log(`Server init in port ${port}`);
+  Logger.log(`Server init in port ${port}`, 'Bootstrap');
 }
 bootstrap();
