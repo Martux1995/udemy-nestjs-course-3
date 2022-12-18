@@ -27,7 +27,7 @@ npm run start:dev
 ```
 8. Rebuild DB with seed
 ```
-GET http://localhost:3000/api/v2/seed
+GET http://localhost:3000/api/seed
 ```
 
 # Production Build
