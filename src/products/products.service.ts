@@ -8,6 +8,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { validate as isUUID } from 'uuid';
+import { User } from '../auth/entities/user.entity';
 
 import { PaginationDto } from '../common/dtos/pagination.dto';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -26,7 +27,7 @@ export class ProductsService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async create(createProductDto: CreateProductDto) {
+  async create(createProductDto: CreateProductDto, user: User) {
     try {
       const { images = [], ...productDetails } = createProductDto;
 
@@ -35,6 +36,7 @@ export class ProductsService {
         images: images.map((i) =>
           this.productImageRepository.create({ url: i }),
         ),
+        user: user,
       });
       await this.productRepository.save(product);
 
@@ -44,7 +46,6 @@ export class ProductsService {
     }
   }
 
-  // TODO: Paginar datos
   async findAll(paginationDto: PaginationDto) {
     const { limit = 10, offset = 0 } = paginationDto;
     const products = await this.productRepository.find({
@@ -93,7 +94,7 @@ export class ProductsService {
     };
   }
 
-  async update(id: string, updateProductDto: UpdateProductDto) {
+  async update(id: string, updateProductDto: UpdateProductDto, user: User) {
     const { images, ...dataToUpdate } = updateProductDto;
 
     const product = await this.productRepository.preload({
@@ -116,7 +117,7 @@ export class ProductsService {
           this.productImageRepository.create({ url }),
         );
       }
-
+      product.user = user;
       await queryRunner.manager.save(product);
       await queryRunner.commitTransaction();
       await queryRunner.release();
