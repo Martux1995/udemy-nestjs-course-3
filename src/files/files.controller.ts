@@ -1,3 +1,5 @@
+import { Response } from 'express';
+import { diskStorage } from 'multer';
 import {
   BadRequestException,
   Controller,
@@ -8,14 +10,15 @@ import {
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Response } from 'express';
-import { diskStorage } from 'multer';
+
 import { FilesService } from './files.service';
 import { fileFilter } from './helpers/fileFilter';
 import { fileNamer } from './helpers/fileNamer';
 
+@ApiTags('Files')
 @Controller('files')
 export class FilesController {
   constructor(
